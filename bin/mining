@@ -34,7 +34,7 @@ def run():
                 connection = c['conection']
 
         print "\n# CLEAN MEMCACHE/RIAK: {}".format(slug)
-        mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+        mc = memcache.Client([MEMCACHE_CONNECTION], debug=MEMCACHE_DEBUG)
         mc.delete(str(slug))
         mc.delete(str('{}-columns'.format(slug)))
 

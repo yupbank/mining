@@ -12,7 +12,7 @@ from tornado.websocket import WebSocketHandler
 from pandas import DataFrame
 
 from .utils import df_generate
-from .models import MyBucket, MyAdminBucket
+from .models import MyBucket, MyAdminBucket, MyCache
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -87,8 +87,6 @@ class ProcessHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     @tornado.gen.engine
     def post(self, slug):
-        mc = memcache.Client(['127.0.0.1:11211'], debug=0)
-
         columns = json.loads(MyBucket.get('{}-columns'.format(slug)).data)
         fields = columns
         if self.get_argument('fields', None):
@@ -99,14 +97,14 @@ class ProcessHandler(tornado.web.RequestHandler):
 
         fields_json = json.dumps(fields)
         filters_json = json.dumps({f: self.get_argument(f) for f in filters})
-        if mc.get(str(slug)) and\
-                mc.get('{}-columns'.format(slug)) == fields_json and\
-                mc.get('{}-fulters'.format(slug)) == filters_json:
-            self.write(mc.get(str(slug)))
+        if MyCache.get(str(slug)) and\
+                MyCache.get('{}-columns'.format(slug)) == fields_json and\
+                MyCache.get('{}-fulters'.format(slug)) == filters_json:
+            self.write(MyCache.get(str(slug)))
             self.finish()
 
-        mc.set('{}-columns'.format(slug), fields_json)
-        mc.set('{}-filters'.format(slug), filters_json)
+        MyCache.set('{}-columns'.format(slug), fields_json)
+        MyCache.set('{}-filters'.format(slug), filters_json)
 
         df = DataFrame(MyBucket.get(slug).data, columns=fields)
         if len(filters) >= 1:
@@ -115,6 +113,6 @@ class ProcessHandler(tornado.web.RequestHandler):
         convert = df.to_dict(outtype='records')
 
         write = json.dumps({'columns': fields, 'json': convert})
-        mc.set(str(slug), write)
+        MyCache.set(str(slug), write)
         self.write(write)
         self.finish()

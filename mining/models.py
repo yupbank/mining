@@ -4,6 +4,7 @@ import os
 import sys
 
 import riak
+import memcache
 
 #hacking for import global settings
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -21,3 +22,5 @@ MyClient = riak.RiakClient(protocol=RIAK_PROTOCOL,
 MyAdminBucket = MyClient.bucket(ADMIN_BUCKET_NAME)
 
 MyBucket = MyClient.bucket(MINING_BUCKET_NAME)
+
+MyCache = memcache.Client([MEMCACHE_CONNECTION], debug=MEMCACHE_DEBUG)
